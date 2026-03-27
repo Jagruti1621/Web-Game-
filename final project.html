@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tic Tac Toe - Pro Edition</title>
+
+<style>
+:root {
+  --bg-color: radial-gradient(circle at 20% 30%, #1e1b4b, transparent 40%),
+              radial-gradient(circle at 80% 70%, #0f172a, transparent 40%),
+              linear-gradient(270deg, #020617, #0f172a, #020617);
+  --app-bg: #020617;
+  --card-shadow: rgba(99,102,241,0.25);
+  --text-color: #e5e7eb;
+  --input-bg: #1e293b;
+  --border-color: #1e293b;
+  --grid-color: rgba(99,102,241,0.15);
+}
+
+.light-mode {
+  --bg-color: radial-gradient(circle at 20% 30%, #e0e7ff, transparent 40%),
+              radial-gradient(circle at 80% 70%, #f1f5f9, transparent 40%),
+              linear-gradient(270deg, #cbd5e1, #f1f5f9, #cbd5e1);
+  --app-bg: #ffffff;
+  --card-shadow: rgba(0,0,0,0.1);
+  --text-color: #1e293b;
+  --input-bg: #f1f5f9;
+  --border-color: #e2e8f0;
+  --grid-color: rgba(99,102,241,0.1);
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  background: var(--bg-color);
+  background-size: 400% 400%;
+  animation: bgMove 10s ease infinite;
+  transition: background 0.5s ease;
+}
+
+@keyframes bgMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+body::before {
+  content: "";
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  background-image:
+    linear-gradient(var(--grid-color) 2px, transparent 2px),
+    linear-gradient(90deg, var(--grid-color) 2px, transparent 2px);
+  background-size: 70px 70px;
+  animation: moveGrid 12s linear infinite;
+  z-index: -1;
+}
+
+@keyframes moveGrid {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-70px, -70px); }
+}
+
+.app {
+  width: 380px;
+  background: var(--app-bg);
+  border-radius: 20px;
+  box-shadow: 0 0 40px var(--card-shadow);
+  overflow: hidden;
+  color: var(--text-color);
+  position: relative;
+  z-index: 1;
+  transition: background 0.5s ease, color 0.5s ease;
+}
+
+.app-header {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Slide Switch Style */
+.theme-switch {
+  display: inline-block;
+  height: 22px;
+  position: relative;
+  width: 44px;
+}
+
+.theme-switch input { display:none; }
+
+.slider {
+  background-color: #334155;
+  bottom: 0;
+  cursor: pointer;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  background-color: #fff;
+  bottom: 3px;
+  content: "🌙";
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 16px;
+  left: 4px;
+  position: absolute;
+  transition: .4s;
+  width: 16px;
+  border-radius: 50%;
+}
+
+input:checked + .slider { background-color: #6366f1; }
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+  content: "☀️";
+}
+
+.back-arrow { font-size: 26px; cursor: pointer; color: #6366f1; visibility: hidden; }
+.exit-text { font-size: 13px; font-weight: bold; cursor: pointer; color: #ef4444; text-transform: uppercase; visibility: hidden; }
+
+.page { padding: 10px 25px 25px 25px; display: none; animation: slide 0.4s ease; }
+.page.active { display: block; }
+
+@keyframes slide {
+  from { transform: translateX(40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+h2 { text-align: center; margin-bottom: 20px; }
+
+.input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.row { display: flex; gap: 10px; align-items: center; }
+
+input[type="text"], select {
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  background: var(--input-bg);
+  color: var(--text-color);
+  outline: 1px solid var(--border-color);
+  font-size: 16px;
+}
+
+input[type="text"] { flex: 2; }
+select { flex: 1; cursor: pointer; }
+
+.robot-display {
+  flex: 1; font-size: 30px; text-align: center;
+  background: var(--input-bg); border-radius: 8px; padding: 5px; border: 1px dashed #6366f1;
+}
+
+.btn-main {
+  width: 100%; padding: 12px; margin: 8px 0;
+  background: #6366f1; color: white; border: none; border-radius: 10px;
+  font-size: 16px; cursor: pointer; font-weight: bold;
+}
+
+.players-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.player-box { text-align: center; opacity: 0.3; transition: 0.3s ease; }
+.player-icon { font-size: 40px; }
+.player-name { font-size: 12px; margin-top: 4px; font-weight: bold; }
+.player-box.active { opacity: 1; color: #22c55e; text-shadow: 0 0 10px rgba(34, 197, 94, 0.5); }
+
+.status-msg { text-align: center; font-size: 14px; font-weight: bold; color: #6366f1; max-width: 120px; }
+
+.board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
+.cell {
+  height: 95px; background: var(--app-bg); border-radius: 12px; font-size: 2.4rem; font-weight: bold;
+  display: flex; justify-content: center; align-items: center; cursor: pointer;
+  outline: 2px solid var(--border-color); color: var(--text-color);
+}
+.cell.win { outline-color: #22c55e; box-shadow: 0 0 15px rgba(34,197,94,0.8); background: rgba(34, 197, 94, 0.1); }
+.cell.X { color: #ef4444; }
+.cell.O { color: #3b82f6; }
+
+/* NEW SCORE OVERLAY STYLES */
+.overlay {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center;
+  z-index: 10; border-radius: 20px; backdrop-filter: blur(4px);
+}
+.score-card {
+  background: #1e293b; width: 85%; padding: 25px; border-radius: 15px; text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #334155;
+}
+.score-title { font-size: 24px; font-weight: bold; margin-bottom: 20px; display: flex; justify-content: center; gap: 10px; align-items: center; }
+.score-grid { display: flex; justify-content: space-around; margin-bottom: 20px; }
+.score-item { background: #0f172a; padding: 10px; border-radius: 8px; min-width: 70px; border: 1px solid #334155; }
+.score-name { font-size: 13px; color: #94a3b8; margin-bottom: 5px; }
+.score-val { font-size: 20px; font-weight: bold; color: #22c55e; }
+.btn-secondary { background: #334155; color: white; border: none; padding: 10px; width: 100%; border-radius: 8px; margin-top: 8px; cursor: pointer; font-weight: bold; }
+</style>
+</head>
+
+<body>
+
+<div class="app">
+  <div class="overlay" id="scoreOverlay">
+    <div class="score-card">
+        <div class="score-title" id="winMsg">Draw 🤝</div>
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="score-name" id="s1Name">P1</div>
+                <div class="score-val" id="s1Val">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-name" id="s2Name">P2</div>
+                <div class="score-val" id="s2Val">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-name">Draw</div>
+                <div class="score-val" id="sDrawVal">0</div>
+            </div>
+        </div>
+        <button class="btn-main" onclick="hideOverlay()">Play Again</button>
+        <div onclick="exitGame()" style="margin-top:15px; cursor:pointer; font-size:12px; color:#94a3b8;">Home</div>
+    </div>
+  </div>
+
+  <div class="app-header">
+    <div class="header-left">
+      <div class="back-arrow" id="backArrow" onclick="goBack()">&#8592;</div>
+      <label class="theme-switch" id="themeSwitchWrapper" for="checkbox">
+        <input type="checkbox" id="checkbox" onchange="toggleTheme()" />
+        <div class="slider"></div>
+      </label>
+    </div>
+    <div class="exit-text" id="exitBtn" onclick="exitGame()">Exit</div>
+  </div>
+
+  <div class="page active" id="page1">
+    <h2>Select Mode</h2>
+    <button class="btn-main" onclick="setMode('friend')">Play with Friend</button>
+    <button class="btn-main" onclick="setMode('computer')">Play with Computer</button>
+  </div>
+
+  <div class="page" id="page2">
+    <h2>Player Details</h2>
+    <div class="input-group">
+      <label style="font-size: 12px; color: #94a3b8;">Player 1</label>
+      <div class="row">
+        <input type="text" id="p1Name" placeholder="Name">
+        <select id="p1Avatar" onchange="syncAvatars()"></select>
+      </div>
+    </div>
+    <div class="input-group">
+      <label style="font-size: 12px; color: #94a3b8;">Player 2</label>
+      <div class="row">
+        <input type="text" id="p2Name" placeholder="Name">
+        <select id="p2Avatar" onchange="syncAvatars()"></select>
+        <div id="p2RobotDisplay" class="robot-display" style="display:none;">🤖</div>
+      </div>
+    </div>
+    <button class="btn-main" onclick="startGame()">Start Game</button>
+  </div>
+
+  <div class="page" id="page3">
+    <div class="players-container">
+      <div class="player-box" id="p1Box">
+        <div class="player-icon" id="p1IconDisp">👤</div>
+        <div class="player-name" id="p1Label">P1</div>
+      </div>
+      <div class="status-msg" id="status"></div>
+      <div class="player-box" id="p2Box">
+        <div class="player-icon" id="p2IconDisp">👤</div>
+        <div class="player-name" id="p2Label">P2</div>
+      </div>
+    </div>
+    <div class="board" id="boardGrid">
+      <div class="cell" onclick="handleClick(0)"></div>
+      <div class="cell" onclick="handleClick(1)"></div>
+      <div class="cell" onclick="handleClick(2)"></div>
+      <div class="cell" onclick="handleClick(3)"></div>
+      <div class="cell" onclick="handleClick(4)"></div>
+      <div class="cell" onclick="handleClick(5)"></div>
+      <div class="cell" onclick="handleClick(6)"></div>
+      <div class="cell" onclick="handleClick(7)"></div>
+      <div class="cell" onclick="handleClick(8)"></div>
+    </div>
+    <button class="btn-main" onclick="resetGame()">Restart</button>
+  </div>
+</div>
+
+<script>
+let currentPage = 1;
+let mode = 'friend';
+let p1Data = { name: "", icon: "" }, p2Data = { name: "", icon: "" };
+let currentPlayer = "X", board = ["","","","","","","","",""], gameActive = true;
+const avatars = ["👦", "👧", "🦁", "🐯", "🐱", "🐶", "🌹", "🌻", "🌸"];
+
+// SCORE TRACKING
+let scores = { p1: 0, p2: 0, draw: 0 };
+
+function toggleTheme() { document.body.classList.toggle('light-mode'); }
+
+function fillDropdowns() {
+  const p1Sel = document.getElementById('p1Avatar');
+  const p2Sel = document.getElementById('p2Avatar');
+  p1Sel.innerHTML = ""; p2Sel.innerHTML = "";
+  avatars.forEach(av => {
+    p1Sel.innerHTML += `<option value="${av}">${av}</option>`;
+    p2Sel.innerHTML += `<option value="${av}">${av}</option>`;
+  });
+  p1Sel.selectedIndex = 0; p2Sel.selectedIndex = 1;
+}
+
+function syncAvatars() {
+    if(mode === 'computer') return;
+    const p1S = document.getElementById('p1Avatar'), p2S = document.getElementById('p2Avatar');
+    Array.from(p2S.options).forEach(opt => opt.disabled = (opt.value === p1S.value));
+    Array.from(p1S.options).forEach(opt => opt.disabled = (opt.value === p2S.value));
+}
+
+function setMode(m) {
+  mode = m; fillDropdowns();
+  const p2N = document.getElementById('p2Name'), p2S = document.getElementById('p2Avatar'), p2R = document.getElementById('p2RobotDisplay');
+  if(mode === 'computer') {
+    p2N.value = "Computer"; p2N.disabled = true; p2S.style.display = "none"; p2R.style.display = "block";
+    p2Data.icon = "🤖";
+  } else {
+    p2N.value = ""; p2N.disabled = false; p2S.style.display = "block"; p2R.style.display = "none";
+    syncAvatars();
+  }
+  goPage(2);
+}
+
+function goPage(num) {
+  currentPage = num;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page' + num).classList.add('active');
+  document.getElementById('backArrow').style.visibility = (num === 1) ? "hidden" : "visible";
+  document.getElementById('exitBtn').style.visibility = (num === 1) ? "hidden" : "visible";
+  document.getElementById('themeSwitchWrapper').style.display = (num === 1) ? "inline-block" : "none";
+}
+
+function goBack() { if (currentPage > 1) goPage(currentPage - 1); }
+function exitGame() { location.reload(); }
+
+function startGame() {
+  p1Data.name = document.getElementById('p1Name').value.trim() || "Player 1";
+  p1Data.icon = document.getElementById('p1Avatar').value;
+  if(mode === 'friend') {
+    p2Data.name = document.getElementById('p2Name').value.trim() || "Player 2";
+    p2Data.icon = document.getElementById('p2Avatar').value;
+  } else { p2Data.name = "Computer"; p2Data.icon = "🤖"; }
+  
+  document.getElementById('p1Label').innerText = p1Data.name;
+  document.getElementById('p1IconDisp').innerText = p1Data.icon;
+  document.getElementById('p2Label').innerText = p2Data.name;
+  document.getElementById('p2IconDisp').innerText = p2Data.icon;
+  
+  // Set score board names
+  document.getElementById('s1Name').innerText = p1Data.name;
+  document.getElementById('s2Name').innerText = p2Data.name;
+  scores = { p1: 0, p2: 0, draw: 0 }; // Reset session scores
+
+  resetGame(); goPage(3);
+}
+
+const statusDisp = document.getElementById('status');
+const cells = document.querySelectorAll('.cell');
+
+function handleClick(i) {
+  if (board[i] !== "" || !gameActive) return;
+  makeMove(i);
+  if (gameActive && mode === 'computer' && currentPlayer === "O") {
+    setTimeout(computerLogic, 600);
+  }
+}
+
+function makeMove(i) {
+  board[i] = currentPlayer;
+  cells[i].innerText = currentPlayer;
+  cells[i].classList.add(currentPlayer);
+  if (checkWin()) return;
+  currentPlayer = (currentPlayer === "X") ? "O" : "X";
+  updateUI();
+}
+
+function updateUI() {
+  let name = (currentPlayer === "X") ? p1Data.name : p2Data.name;
+  statusDisp.innerText = name + "'s Turn";
+  document.getElementById('p1Box').classList.toggle('active', currentPlayer === "X");
+  document.getElementById('p2Box').classList.toggle('active', currentPlayer === "O");
+}
+
+function computerLogic() {
+  let empty = board.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+  if (empty.length > 0) {
+    let move = empty[Math.floor(Math.random() * empty.length)];
+    makeMove(move);
+  }
+}
+
+const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+function checkWin() {
+  for (let c of wins) {
+    let [a, b, c1] = c;
+    if (board[a] && board[a] === board[b] && board[a] === board[c1]) {
+      [a,b,c1].forEach(idx => cells[idx].classList.add('win'));
+      let winner = (currentPlayer === "X" ? p1Data.name : p2Data.name);
+      statusDisp.innerText = "🎉 " + winner + " Wins!";
+      
+      // Update scores
+      if(currentPlayer === "X") scores.p1++; else scores.p2++;
+      showOverlay("🎉 " + winner + " Wins!");
+      
+      gameActive = false; return true;
+    }
+  }
+  if (!board.includes("")) { 
+    statusDisp.innerText = "Draw 🤝"; 
+    scores.draw++;
+    showOverlay("Draw 🤝");
+    gameActive = false; return true; 
+  }
+  return false;
+}
+
+function showOverlay(msg) {
+    setTimeout(() => {
+        document.getElementById('winMsg').innerText = msg;
+        document.getElementById('s1Val').innerText = scores.p1;
+        document.getElementById('s2Val').innerText = scores.p2;
+        document.getElementById('sDrawVal').innerText = scores.draw;
+        document.getElementById('scoreOverlay').style.display = 'flex';
+    }, 800);
+}
+
+function hideOverlay() {
+    document.getElementById('scoreOverlay').style.display = 'none';
+    resetGame();
+}
+
+function resetGame() {
+  currentPlayer = "X"; board = ["","","","","","","","",""]; gameActive = true;
+  cells.forEach(c => { c.innerText = ""; c.classList.remove('X','O','win'); });
+  updateUI();
+}
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
